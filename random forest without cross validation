@@ -1,0 +1,43 @@
+import numpy as np
+from imblearn.over_sampling import RandomOverSampler
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import confusion_matrix
+from sklearn.metrics import roc_curve
+from sklearn.metrics import roc_auc_score
+import matplotlib.pyplot as plt
+
+data_train=np.loadtxt('file_name_train.csv',delimiter=',',skiprows=1,dtype=float)
+x_train=data_train[:, 1:]
+y_train=data_train[:, 0:1].ravel()
+
+data_test=np.loadtxt('file_name_test.csv',delimiter=',',skiprows=1,dtype=float)
+x_test=data_test[:, 1:]
+y_test=data_test[:, 0:1].ravel()
+
+ros=RandomOverSampler(random_state='fixed_value')
+x_train,y_train=ros.fit_sample(x_train,y_train)
+
+model=RandomForestClassifier(n_estimators='value',random_state='fixed_value',max_depth='value')
+model.fit(x_train,y_train)
+
+score_test=model.score(x_test,y_test)
+print('score_test:{:.3f}'.format(score_test))    
+predict_test=model.predict(x_test)
+predict_proba_test=model.predict_proba(x_test)
+confusion_test=confusion_matrix(y_test,predict_test)
+print("{}".format(confusion_test))
+tn,fp,fn,tp=confusion_matrix(y_test,predict_test).ravel()
+sensitivity_test=tp/(tp+fn)
+print("sensitivity_test:{:.3f}".format(sensitivity_test))
+specificity_test=tn/(tn+fp)
+print("specificity_test:{:.3f}".format(specificity_test))
+
+fpr,tpr,thresholds=roc_curve(y_test,predict_test)
+auc_test=roc_auc_score(y_test,predict_test)
+plt.plot(fpr, tpr, label='ROC curve (area = %.2f)'%auc_test)
+plt.legend()
+plt.title('ROC curve')
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+plt.grid(True)
+print("auc_test:{:.3f}".format(auc_test))
