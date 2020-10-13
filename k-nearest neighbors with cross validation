@@ -8,15 +8,15 @@ from sklearn.metrics import roc_curve
 import matplotlib.pyplot as plt
 from statistics import mean
 
-data_train=np.loadtxt('09_train.csv',delimiter=',',skiprows=1,dtype=float)
+data_train=np.loadtxt('file_name_train.csv',delimiter=',',skiprows=1,dtype=float)
 x=data_train[:, 1:]
 y=data_train[:, 0:1].ravel()
 
-data_test=np.loadtxt('09_test.csv',delimiter=',',skiprows=1,dtype=float)
+data_test=np.loadtxt('file_name_test.csv',delimiter=',',skiprows=1,dtype=float)
 x_test=data_test[:, 1:]
 y_test=data_test[:, 0:1].ravel()
 
-ros=RandomOverSampler(random_state=4154)
+ros=RandomOverSampler(random_state='fixed_value')
 x,y=ros.fit_sample(x,y)
 
 skf=StratifiedKFold(n_splits=30)
@@ -32,7 +32,7 @@ for train,val in skf.split(x,y):
     y_train.append(y[train])
     y_val.append(y[val])
 
-model=KNeighborsClassifier(n_neighbors=5)
+model=KNeighborsClassifier(n_neighbors='value')
 
 mean_score_val=[]
 mean_sensitivity_val=[]
