@@ -1,0 +1,103 @@
+import numpy as np
+from imblearn.over_sampling import RandomOverSampler
+from sklearn.model_selection import StratifiedKFold
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import confusion_matrix
+from sklearn.metrics import roc_auc_score
+from sklearn.metrics import roc_curve
+import matplotlib.pyplot as plt
+from statistics import mean
+
+data_train=np.loadtxt('09_train.csv',delimiter=',',skiprows=1,dtype=float)
+x=data_train[:, 1:]
+y=data_train[:, 0:1].ravel()
+
+data_test=np.loadtxt('09_test.csv',delimiter=',',skiprows=1,dtype=float)
+x_test=data_test[:, 1:]
+y_test=data_test[:, 0:1].ravel()
+
+ros=RandomOverSampler(random_state=4154)
+x,y=ros.fit_sample(x,y)
+
+skf=StratifiedKFold(n_splits=30)
+
+x_train=[]
+x_val=[]
+y_train=[]
+y_val=[]
+
+for train,val in skf.split(x,y):
+    x_train.append(x[train])
+    x_val.append(x[val])
+    y_train.append(y[train])
+    y_val.append(y[val])
+
+model=KNeighborsClassifier(n_neighbors=5)
+
+mean_score_val=[]
+mean_sensitivity_val=[]
+mean_specificity_val=[]
+mean_auc_val=[]
+
+mean_score_test=[]
+mean_sensitivity_test=[]
+mean_specificity_test=[]
+mean_auc_test=[]
+
+for i in range(30):
+    model.fit(x_train[i],y_train[i])
+    
+    score_val=model.score(x_val[i],y_val[i])
+    print('score_val:{:.3f}'.format(score_val))
+    predict_val=model.predict(x_val[i])
+    confusion_val=confusion_matrix(y_val[i],predict_val)
+    print("{}".format(confusion_val))
+    tn,fp,fn,tp=confusion_matrix(y_val[i],predict_val).ravel()
+    sensitivity_val=tp/(tp+fn)
+    print("sensitivity_val:{:.3f}".format(sensitivity_val))
+    specificity_val=tn/(tn+fp)
+    print("specificity_val:{:.3f}".format(specificity_val))
+    print()
+    
+    score_test=model.score(x_test,y_test)
+    print('score_test:{:.3f}'.format(score_test))    
+    predict_test=model.predict(x_test)
+    confusion_test=confusion_matrix(y_test,predict_test)
+    print("{}".format(confusion_test))
+    tn,fp,fn,tp=confusion_matrix(y_test,predict_test).ravel()
+    sensitivity_test=tp/(tp+fn)
+    print("sensitivity_test:{:.3f}".format(sensitivity_test))
+    specificity_test=tn/(tn+fp)
+    print("specificity_test:{:.3f}".format(specificity_test))
+    print()
+    
+    mean_score_val.append(score_val)
+    mean_sensitivity_val.append(sensitivity_val)
+    mean_specificity_val.append(specificity_val)
+    auc_val=roc_auc_score(y_val[i],predict_val)
+    mean_auc_val.append(auc_val)
+    
+    mean_score_test.append(score_test)
+    mean_sensitivity_test.append(sensitivity_test)
+    mean_specificity_test.append(specificity_test)
+    auc_test=roc_auc_score(y_test,predict_test)
+    mean_auc_test.append(auc_test)
+
+    fpr,tpr,thresholds=roc_curve(y_test,predict_test)
+    plt.plot(fpr, tpr, label='ROC curve (area = %.2f)'%auc_test)
+    plt.legend()
+    plt.title('ROC curve')
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.grid(True)
+
+print('Average score_val: {:.3f}'.format(mean(mean_score_val))) 
+print('Average sensitivity_val: {:.3f}'.format(mean(mean_sensitivity_val))) 
+print('Average specificity_val: {:.3f}'.format(mean(mean_specificity_val))) 
+print('Average AUC_val: {:.3f}'.format(mean(mean_auc_val))) 
+print()
+
+print('Average score_test: {:.3f}'.format(mean(mean_score_test))) 
+print('Average sensitivity_test: {:.3f}'.format(mean(mean_sensitivity_test))) 
+print('Average specificity_test: {:.3f}'.format(mean(mean_specificity_test))) 
+print('Average AUC_test: {:.3f}'.format(mean(mean_auc_test))) 
